@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Dynasty | Master Edition</title>
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Teko:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --red-primary: #FF0022;
+            --red-dark: #8a0000;
+            --black-bg: #050505;
+            --black-panel: #0a0a0a;
+            --border: #1a1a1a;
+            --text-main: #e5e5e5;
+            --text-muted: #737373;
+        }
+
+        body {
+            background-color: var(--black-bg);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-brand { font-family: 'Teko', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Glassmorphism & UI */
+        .glass-panel {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 10px rgba(255, 0, 34, 0.3);
+            border: 1px solid var(--red-primary);
+        }
+
+        .btn-master {
+            background: linear-gradient(135deg, var(--red-dark) 0%, var(--red-primary) 100%);
+            color: white;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.2rem;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: all 0.3s ease;
+        }
+        .btn-master:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255, 0, 34, 0.6); }
+        .btn-master:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+
+        /* Barras de Progresso */
+        .stat-track { background: #1a1a1a; height: 6px; border-radius: 2px; overflow: hidden; }
+        .stat-fill { height: 100%; background: var(--red-primary); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Animações Customizadas */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 34, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 34, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 34, 0); } }
+        .pulse-active { animation: pulse-red 2s infinite; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--black-bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col relative">
+
+    <transition name="animate__fadeIn">
+        <div v-if="gameState === 'SETUP'" class="flex-1 flex items-center justify-center p-6 bg-[url('https://images.unsplash.com/photo-1522770179533-24471fcdba45?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center">
+            <div class="absolute inset-0 bg-black/90"></div>
+            
+            <div class="relative glass-panel w-full max-w-6xl p-8 rounded-xl flex flex-col md:flex-row gap-10 animate__animated animate__fadeInUp z-10 border-t-4 border-red-600">
+                
+                <div class="w-full md:w-1/3 space-y-6">
+                    <h1 class="font-brand text-6xl text-white leading-none">FOOTBALL <span class="text-red-600">DYNASTY</span></h1>
+                    <p class="text-xs font-bold text-zinc-500 tracking-[0.4em]">MASTER EDITION v1.0</p>
+                    
+                    <div class="relative w-40 h-40 bg-[#111] border border-zinc-800 mx-auto overflow-hidden group cursor-pointer" @click="$refs.fileInput.click()">
+                        <img v-if="player.photo" :src="player.photo" class="w-full h-full object-cover">
+                        <div v-else class="flex items-center justify-center h-full text-zinc-600 flex-col">
+                            <i class="fas fa-camera text-2xl mb-2"></i>
+                            <span class="text-xs uppercase">Upload Foto</span>
+                        </div>
+                        <input type="file" ref="fileInput" @change="handlePhoto" class="hidden">
+                    </div>
+
+                    <div class="space-y-3">
+                        <input v-model="player.name" type="text" placeholder="NOME DO ATLETA" class="w-full bg-[#0a0a0a] border border-[#222] p-4 text-white font-brand text-xl focus:border-red-600 outline-none">
+                        <select v-model="player.nationality" class="w-full bg-[#0a0a0a] border border-[#222] p-3 text-zinc-300">
+                            <option value="🇧🇷 Brasil">🇧🇷 Brasil</option>
+                            <option value="🇦🇷 Argentina">🇦🇷 Argentina</option>
+                            <option value="🇵🇹 Portugal">🇵🇹 Portugal</option>
+                            <option value="🇫🇷 França">🇫🇷 França</option>
+                            <option value="🇬🇧 Inglaterra">🇬🇧 Inglaterra</option>
+                            <option value="🇪🇸 Espanha">🇪🇸 Espanha</option>
+                        </select>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input v-model.number="player.age" type="number" min="16" max="21" placeholder="Idade (16-21)" class="bg-[#0a0a0a] border border-[#222] p-3 text-white">
+                            <select v-model="player.position" class="bg-[#0a0a0a] border border-[#222] p-3 text-white">
+                                <option value="ATA">Atacante</option>
+                                <option value="MEI">Meio-Campo</option>
+                                <option value="ZAG">Zagueiro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 space-y-6">
+                    <h3 class="font-brand text-2xl text-red-600 border-b border-zinc-800 pb-2">Definição Técnica</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-sm uppercase font-bold text-zinc-500">
+                            <span>Potencial Inicial</span>
+                            <span class="text-white">{{ pointsAllocated }}/{{ maxPoints }} pts</span>
+                        </div>
+                        <input type="range" v-model="pointsAllocated" :max="maxPoints" min="40" class="w-full accent-red-600">
+                        <p class="text-xs text-zinc-600 italic">Define a qualidade inicial. Menos pontos = maior desafio (Hard Mode).</p>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="text-xs uppercase font-bold text-zinc-500 mb-2 block">Clube Inicial</label>
+                        <select v-model="selectedStartClub" class="w-full bg-[#0a0a0a] border border-[#222] p-4 text-white font-brand text-xl">
+                            <optgroup v-for="(league, name) in db.leagues" :label="name">
+                                <option v-for="club in league.clubs" :value="{club: club, leagueName: name}">
+                                    {{ club.name }} (Tier {{ league.tier }})
+                                </option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <button @click="startGame" :disabled="!isValidStart" class="w-full btn-master py-6 mt-8 text-2xl">
+                        INICIAR CARREIRA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+    <transition name="animate__fadeIn">
+        <div v-if="gameState === 'DASHBOARD'" class="flex-1 flex flex-col md:flex-row overflow-hidden bg-black">
+            
+            <aside class="w-full md:w-80 bg-[#080808] border-r border-zinc-900 flex flex-col z-20">
+                <div class="p-6 border-b border-zinc-900 bg-gradient-to-b from-[#111] to-transparent">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full border-2 border-red-600 p-0.5 overflow-hidden">
+                            <img :src="player.photo || 'https://via.placeholder.com/150'" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        <div>
+                            <h2 class="font-brand text-2xl leading-none text-white">{{ player.name }}</h2>
+                            <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-1">{{ player.club.name }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+                        <div class="bg-zinc-900/50 p-2 rounded border border-zinc-800">
+                            <span class="block text-[9px] text-zinc-500 uppercase">OVR</span>
+                            <span class="block font-brand text-xl text-white">{{ player.ovr }}</span>
+                        </div>
+                        <div class="bg-zinc-900/50 p-2 rounded border border-zinc-800">
+                            <span class="block text-[9px] text-zinc-500 uppercase">Idade</span>
+                            <span class="block font-brand text-xl text-white">{{ player.age }}</span>
+                        </div>
+                        <div class="bg-zinc-900/50 p-2 rounded border border-zinc-800">
+                            <span class="block text-[9px] text-zinc-500 uppercase">Camisa</span>
+                            <span class="block font-brand text-xl text-red-500">10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <button v-for="tab in tabs" @click="activeTab = tab.id" 
+                        :class="['w-full text-left px-4 py-3 rounded flex items-center gap-3 transition font-brand text-lg tracking-wide', activeTab === tab.id ? 'bg-red-600/10 text-white border-l-2 border-red-600' : 'text-zinc-500 hover:text-white hover:bg-zinc-900']">
+                        <i :class="['fas w-6 text-center text-sm', tab.icon]"></i> 
+                        <span>{{ tab.name }}</span>
+                    </button>
+                </nav>
+
+                <div class="p-5 border-t border-zinc-900 bg-[#0a0a0a]">
+                    <div class="flex justify-between text-xs font-bold text-zinc-500 uppercase mb-1">
+                        <span>Fadiga</span>
+                        <span :class="player.energy < 50 ? 'text-red-500' : 'text-green-500'">{{ player.energy }}%</span>
+                    </div>
+                    <div class="stat-track mb-4">
+                        <div class="stat-fill" :style="{width: player.energy + '%', background: player.energy < 50 ? '#ef4444' : '#10b981'}"></div>
+                    </div>
+                    
+                    <button @click="advanceTime" :disabled="isProcessing" class="w-full btn-master py-4 text-xl flex items-center justify-center gap-2 group relative overflow-hidden">
+                        <span v-if="!isProcessing">AVANÇAR SEMANA</span>
+                        <span v-else>PROCESSANDO...</span>
+                    </button>
+                    <p class="text-center text-[10px] text-zinc-600 mt-3 font-mono">{{ currentDateDisplay }}</p>
+                </div>
+            </aside>
+
+            <main class="flex-1 overflow-y-auto relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black">
+                
+                <header class="h-16 border-b border-zinc-900 flex items-center justify-between px-8 bg-black/50 backdrop-blur sticky top-0 z-30">
+                    <div class="flex gap-8">
+                        <div>
+                            <p class="text-[9px] text-zinc-500 font-bold uppercase">Valor de Mercado</p>
+                            <p class="text-xl font-brand text-green-500">€ {{ formatMoney(player.value) }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-zinc-500 font-bold uppercase">Salário / Ano</p>
+                            <p class="text-xl font-brand text-zinc-300">€ {{ formatMoney(player.wage) }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p class="text-[9px] text-zinc-500 font-bold uppercase">Reputação Global</p>
+                            <div class="flex text-yellow-500 text-xs gap-1">
+                                <i v-for="n in 5" :class="n <= player.reputation ? 'fas fa-star' : 'far fa-star text-zinc-700'"></i>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-8 pb-32 max-w-7xl mx-auto">
+                    
+                    <div v-if="activeTab === 'home'" class="animate__animated animate__fadeIn">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            
+                            <div class="lg:col-span-2 space-y-4">
+                                <div class="flex justify-between items-end border-b border-zinc-800 pb-2 mb-4">
+                                    <h3 class="font-brand text-2xl text-white">Mídia & Redes Sociais</h3>
+                                    <span class="text-red-600 text-xs animate-pulse font-bold">● AO VIVO</span>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div v-for="(news, idx) in feed" :key="idx" class="glass-panel p-5 rounded border-l-4 border-red-600 animate__animated animate__fadeInLeft">
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-[10px] font-bold text-red-500 uppercase tracking-widest bg-red-900/10 px-2 py-0.5 rounded">{{ news.source }}</span>
+                                            <span class="text-[10px] text-zinc-600">{{ news.date }}</span>
+                                        </div>
+                                        <h4 class="text-lg font-brand text-white leading-tight mb-1">{{ news.headline }}</h4>
+                                        <p class="text-sm text-zinc-400 font-medium leading-relaxed">"{{ news.content }}"</p>
+                                        <div class="mt-3 flex gap-4 text-xs text-zinc-600 border-t border-zinc-800/50 pt-2">
+                                            <span><i class="fas fa-heart mr-1 text-red-900"></i> {{ formatNumber(news.likes) }}</span>
+                                            <span><i class="fas fa-retweet mr-1 text-green-900"></i> {{ formatNumber(news.shares) }}</span>
+                                        </div>
+                                    </div>
+                                    <div v-if="feed.length === 0" class="text-center py-12 text-zinc-600 italic">
+                                        A temporada está prestes a começar...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div class="glass-panel p-5 rounded">
+                                    <h3 class="text-xs font-bold text-zinc-500 uppercase mb-4 tracking-widest">Performance da Temporada</h3>
+                                    <div class="grid grid-cols-2 gap-3 mb-4">
+                                        <div class="bg-[#111] p-3 rounded text-center border border-zinc-800">
+                                            <div class="text-3xl font-brand text-white">{{ stats.season.goals }}</div>
+                                            <div class="text-[9px] text-zinc-500 uppercase font-bold">Gols</div>
+                                        </div>
+                                        <div class="bg-[#111] p-3 rounded text-center border border-zinc-800">
+                                            <div class="text-3xl font-brand text-white">{{ stats.season.assists }}</div>
+                                            <div class="text-[9px] text-zinc-500 uppercase font-bold">Assistências</div>
+                                        </div>
+                                        <div class="bg-[#111] p-3 rounded text-center border border-zinc-800">
+                                            <div class="text-3xl font-brand text-white">{{ stats.season.matches }}</div>
+                                            <div class="text-[9px] text-zinc-500 uppercase font-bold">Jogos</div>
+                                        </div>
+                                        <div class="bg-[#111] p-3 rounded text-center border border-zinc-800">
+                                            <div class="text-3xl font-brand text-yellow-500">{{ stats.season.avgRating }}</div>
+                                            <div class="text-[9px] text-zinc-500 uppercase font-bold">Nota Média</div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-zinc-800 pt-3">
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <span class="text-zinc-500">xG (Gols Esperados)</span>
+                                            <span class="text-zinc-300 font-mono">{{ stats.season.xg }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="glass-panel p-5 rounded">
+                                    <h3 class="text-xs font-bold text-zinc-500 uppercase mb-4 tracking-widest">Atributos Técnicos</h3>
+                                    <div class="space-y-2">
+                                        <div v-for="(val, key) in player.attributes" :key="key" class="group">
+                                            <div class="flex justify-between text-xs mb-0.5 font-bold">
+                                                <span class="text-zinc-400 uppercase group-hover:text-white transition">{{ key }}</span>
+                                                <span :class="val >= 90 ? 'text-red-500' : (val >= 80 ? 'text-green-500' : 'text-zinc-300')">{{ Math.floor(val) }}</span>
+                                            </div>
+                                            <div class="stat-track h-1">
+                                                <div class="stat-fill" :style="{width: val + '%', backgroundColor: val > 85 ? '#ef4444' : '#444'}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="activeTab === 'transfers'" class="animate__animated animate__fadeIn">
+                        <div v-if="isTransferWindow" class="mb-6 bg-green-900/10 border border-green-500/30 p-4 rounded flex items-center justify-center gap-3">
+                            <i class="fas fa-door-open text-green-500 text-xl"></i> 
+                            <span class="text-green-500 font-brand text-xl tracking-wide">JANELA DE TRANSFERÊNCIAS ABERTA</span>
+                        </div>
+                        <div v-else class="mb-6 bg-red-900/10 border border-red-500/30 p-4 rounded flex items-center justify-center gap-3">
+                            <i class="fas fa-lock text-red-500 text-xl"></i> 
+                            <span class="text-red-500 font-brand text-xl tracking-wide">JANELA FECHADA</span>
+                        </div>
+
+                        <div v-if="offers.length > 0" class="grid md:grid-cols-2 gap-6">
+                            <div v-for="offer in offers" :key="offer.id" class="glass-panel p-6 rounded relative overflow-hidden group border-t-2 border-yellow-500">
+                                <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl group-hover:scale-110 transition duration-500">⚽</div>
+                                
+                                <div class="relative z-10">
+                                    <div class="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h3 class="font-brand text-4xl text-white italic">{{ offer.clubName }}</h3>
+                                            <p class="text-xs font-bold uppercase text-zinc-500">{{ offer.league }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="bg-green-900/20 px-3 py-1 rounded border border-green-500/20">
+                                                <p class="text-green-500 font-brand text-2xl">€ {{ formatMoney(offer.wage) }}</p>
+                                                <p class="text-[9px] uppercase text-green-700 font-bold">Anual</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-3 mb-6 text-sm text-zinc-400">
+                                        <div class="flex justify-between border-b border-zinc-800 pb-2">
+                                            <span>Transferência</span>
+                                            <span class="text-white font-bold">€ {{ formatMoney(offer.fee) }}</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-zinc-800 pb-2">
+                                            <span>Status</span>
+                                            <span class="text-yellow-500 font-bold uppercase">{{ offer.status }}</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-zinc-800 pb-2">
+                                            <span>Contrato</span>
+                                            <span class="text-white font-bold">{{ offer.years }} Anos</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button @click="acceptOffer(offer)" class="btn-master py-2 text-sm">ASSINAR</button>
+                                        <button @click="rejectOffer(offer.id)" class="bg-zinc-800 hover:bg-zinc-700 transition py-2 rounded text-sm font-bold uppercase text-zinc-400 font-brand tracking-widest">RECUSAR</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else-if="isTransferWindow" class="text-center py-20 border-2 border-dashed border-zinc-800 rounded opacity-50">
+                            <p class="font-brand text-2xl text-zinc-500">Nenhuma proposta na mesa</p>
+                        </div>
+                    </div>
+
+                    <div v-if="activeTab === 'history'" class="animate__animated animate__fadeIn">
+                        <div class="glass-panel rounded overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-[#111] text-[10px] font-black uppercase text-zinc-500 tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Temp</th>
+                                        <th class="p-4">Clube</th>
+                                        <th class="p-4">Jogos</th>
+                                        <th class="p-4">Gols</th>
+                                        <th class="p-4">Assists</th>
+                                        <th class="p-4">Rating</th>
+                                        <th class="p-4">Títulos</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm font-medium divide-y divide-zinc-800 text-zinc-300">
+                                    <tr v-for="h in history" :key="h.year" class="hover:bg-white/5 transition">
+                                        <td class="p-4 font-brand text-lg text-zinc-500">{{ h.year }}</td>
+                                        <td class="p-4 font-bold text-white">{{ h.club }}</td>
+                                        <td class="p-4">{{ h.matches }}</td>
+                                        <td class="p-4 text-white">{{ h.goals }}</td>
+                                        <td class="p-4">{{ h.assists }}</td>
+                                        <td class="p-4"><span :class="getRatingColor(h.rating)">{{ h.rating }}</span></td>
+                                        <td class="p-4 text-xs text-yellow-500">{{ h.trophies.join(', ') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div v-if="history.length === 0" class="p-8 text-center text-zinc-600 italic">Iniciando legado...</div>
+                        </div>
+
+                        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div v-for="trophy in trophies" class="glass-panel p-4 flex flex-col items-center justify-center text-center border border-yellow-500/20">
+                                <i class="fas fa-trophy text-4xl text-yellow-500 mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]"></i>
+                                <span class="font-brand text-lg text-white leading-none">{{ trophy.name }}</span>
+                                <span class="text-xs text-zinc-500">{{ trophy.year }}</span>
+                            </div>
+                         </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </transition>
+
+    <div v-if="isProcessing" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center backdrop-blur-md">
+        <div class="w-full max-w-md px-6">
+            <h2 class="font-brand text-5xl italic text-white mb-1 tracking-wide animate-pulse text-center">SIMULANDO</h2>
+            <div class="flex justify-between text-[10px] font-bold uppercase text-red-500 mb-2 mt-4">
+                <span>{{ loadingText }}</span>
+                <span>{{ loadingProgress }}%</span>
+            </div>
+            <div class="stat-track h-1 w-full bg-zinc-900">
+                <div class="stat-fill" :style="{width: loadingProgress + '%'}"></div>
+            </div>
+            <div class="mt-4 text-center text-zinc-600 text-[10px] font-mono opacity-60">
+                Engine: v1.0.4 | Memory Heap: Stable | Math: {{ Math.random().toFixed(4) }}
+            </div>
+        </div>
+    </div>
+    
+    <transition name="animate__zoomIn">
+        <div v-if="showBallonDor" class="fixed inset-0 z-[60] bg-black flex items-center justify-center p-6 text-center">
+            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1496337589254-7e19d01cec44?q=80&w=2070&auto=format&fit=crop')] bg-cover opacity-20"></div>
+            <div class="max-w-2xl w-full relative z-10">
+                <i class="fas fa-trophy text-7xl text-yellow-400 mb-6 animate-bounce drop-shadow-[0_0_30px_rgba(250,204,21,0.6)]"></i>
+                <h1 class="text-6xl font-brand font-bold text-white mb-2 italic">BOLA DE OURO</h1>
+                <p class="text-2xl text-yellow-500 font-medium mb-8 uppercase tracking-[0.3em]">Melhor do Mundo</p>
+                
+                <div class="bg-black/60 backdrop-blur-md p-8 rounded border border-yellow-500/30 mb-8">
+                    <p class="text-xl text-zinc-200 italic leading-relaxed font-serif">"Uma temporada para a história. Com números impressionantes e títulos decisivos, {{ player.name }} coloca seu nome no panteão dos imortais do futebol."</p>
+                </div>
+                
+                <button @click="closeBallonDor" class="btn-master px-16 py-4 rounded text-xl shadow-[0_0_40px_rgba(255,0,34,0.4)]">RECEBER PRÊMIO</button>
+            </div>
+        </div>
+    </transition>
+
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    // --- BASE DE DADOS ESTRUTURAL --- //
+    const DB = {
+        leagues: {
+            "Premier League": { tier: 1, multiplier: 1.0, clubs: [{name: "Man City", budget: 300}, {name: "Arsenal", budget: 200}, {name: "Liverpool", budget: 180}, {name: "Man Utd", budget: 250}, {name: "Newcastle", budget: 400}, {name: "Chelsea", budget: 300}, {name: "Spurs", budget: 150}, {name: "Aston Villa", budget: 100}] },
+            "La Liga": { tier: 1, multiplier: 0.95, clubs: [{name: "Real Madrid", budget: 350}, {name: "Barcelona", budget: 150}, {name: "Atlético Madrid", budget: 100}, {name: "Sevilla", budget: 60}, {name: "Real Sociedad", budget: 50}] },
+            "Bundesliga": { tier: 2, multiplier: 0.9, clubs: [{name: "Bayern", budget: 250}, {name: "Dortmund", budget: 120}, {name: "Leverkusen", budget: 80}, {name: "RB Leipzig", budget: 100}] },
+            "Serie A": { tier: 2, multiplier: 0.9, clubs: [{name: "Inter", budget: 100}, {name: "Milan", budget: 90}, {name: "Juventus", budget: 140}, {name: "Napoli", budget: 70}, {name: "Roma", budget: 60}] },
+            "Brasileirão": { tier: 3, multiplier: 0.7, clubs: [{name: "Flamengo", budget: 50}, {name: "Palmeiras", budget: 45}, {name: "Atlético-MG", budget: 35}, {name: "São Paulo", budget: 20}, {name: "Botafogo", budget: 40}, {name: "Corinthians", budget: 25}, {name: "Fluminense", budget: 20}, {name: "Grêmio", budget: 15}] },
+            "Ligue 1": { tier: 2, multiplier: 0.85, clubs: [{name: "PSG", budget: 400}, {name: "Monaco", budget: 60}, {name: "Marseille", budget: 50}, {name: "Lyon", budget: 45}] }
+        }
+    };
+
+    // --- NARRATIVAS --- //
+    const NARRATIVES = {
+        good: [
+            "{name} foi o maestro hoje. Uma atuação soberba que encantou a torcida.",
+            "Jornais locais se rendem ao talento de {name}: 'Ele joga de terno'.",
+            "Gol decisivo! {name} aparece no momento crítico para garantir os 3 pontos.",
+            "Estatísticas monstruosas: {name} dominou todas as ações ofensivas do jogo."
+        ],
+        bad: [
+            "Dia para esquecer. {name} errou tudo o que tentou e saiu vaiado.",
+            "Críticos questionam a forma física de {name} após atuação apagada.",
+            "Substituído no intervalo, {name} demonstra frustração no banco.",
+            "A seca de gols de {name} começa a preocupar a diretoria."
+        ],
+        transfer: [
+            "RUMOR: Gigantes europeus monitoram a situação de {name}.",
+            "Agente de {name} é visto jantando com diretores de clube rival.",
+            "Valor de mercado de {name} dispara após sequência incrível."
+        ]
+    };
+
+    createApp({
+        data() {
+            return {
+                gameState: 'SETUP', // SETUP, DASHBOARD
+                activeTab: 'home',
+                isProcessing: false,
+                loadingProgress: 0,
+                loadingText: '',
+                showBallonDor: false,
+                
+                // Variáveis de Tempo
+                currentYear: 2024,
+                week: 1,
+                
+                // Dados de Setup
+                selectedStartClub: null,
+                pointsAllocated: 60,
+                maxPoints: 75,
+                
+                // Player Model
+                player: {
+                    name: '',
+                    photo: null,
+                    nationality: '🇧🇷 Brasil',
+                    age: 18,
+                    position: 'ATA',
+                    club: { name: '', budget: 0 },
+                    league: '',
+                    ovr: 60,
+                    value: 0,
+                    wage: 0,
+                    energy: 100,
+                    moral: 80,
+                    reputation: 1,
+                    attributes: {}
+                },
+
+                // Stats da Temporada Atual
+                stats: {
+                    season: { matches: 0, goals: 0, assists: 0, xg: 0, avgRating: "0.0", sumRating: 0 }
+                },
+
+                // Listas
+                feed: [],
+                offers: [],
+                history: [],
+                trophies: [],
+                db: DB,
+
+                tabs: [
+                    { id: 'home', name: 'Visão Geral', icon: 'fa-home' },
+                    { id: 'transfers', name: 'Mercado', icon: 'fa-briefcase' },
+                    { id: 'history', name: 'Histórico', icon: 'fa-clock-rotate-left' }
+                ]
+            }
+        },
+        computed: {
+            isValidStart() {
+                return this.player.name.length > 2 && this.selectedStartClub;
+            },
+            currentDateDisplay() {
+                // Simulação de calendário: 52 semanas
+                const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                const monthIndex = Math.floor((this.week / 52) * 12) % 12;
+                return `Semana ${this.week} • ${months[monthIndex]} • ${this.currentYear}`;
+            },
+            isTransferWindow() {
+                // Janelas: Semanas 1-8 (Verão) e 24-28 (Inverno)
+                return (this.week >= 1 && this.week <= 8) || (this.week >= 24 && this.week <= 28);
+            }
+        },
+        methods: {
+            // --- SETUP --- //
+            handlePhoto(e) {
+                const file = e.target.files[0];
+                if(file) this.player.photo = URL.createObjectURL(file);
+            },
+            startGame() {
+                // Inicializa Atributos Base
+                const base = this.pointsAllocated;
+                const p = this.player.position;
+                
+                this.player.attributes = {
+                    "Finalização": p === 'ATA' ? base + 10 : (p === 'MEI' ? base - 5 : base - 20),
+                    "Passe": p === 'MEI' ? base + 10 : base,
+                    "Drible": p === 'ZAG' ? base - 10 : base + 5,
+                    "Velocidade": base,
+                    "Físico": p === 'ZAG' ? base + 10 : base - 5,
+                    "Mental": base - 10 // Jovens começam com mental baixo
+                };
+
+                this.player.club = this.selectedStartClub.club;
+                this.player.league = this.selectedStartClub.leagueName;
+                this.calculateOvr();
+                this.calculateValue();
+                
+                this.addFeed("Jornal Oficial", "Estreia Profissional", `${this.player.name} assina seu primeiro contrato profissional com o ${this.player.club.name}. "É um sonho realizado", disse o jovem talento.`);
+                
+                this.gameState = 'DASHBOARD';
+            },
+
+            // --- ENGINE PRINCIPAL --- //
+            async advanceTime() {
+                this.isProcessing = true;
+                this.loadingProgress = 0;
+                
+                // Simulação Visual
+                const steps = ["Preparação Física", "Treinamento Tático", "Análise de Adversário", "Dia de Jogo", "Processando Mídia"];
+                for(let i=0; i<steps.length; i++) {
+                    this.loadingText = steps[i];
+                    this.loadingProgress += 20;
+                    await new Promise(r => setTimeout(r, 300));
+                }
+
+                // 1. Simular Partida (Math Model)
+                this.simulateMatch();
+
+                // 2. Recuperação & Fadiga
+                this.player.energy = Math.min(100, this.player.energy + 15); // Recupera
+                this.player.energy -= 10; // Custo do jogo
+                if(this.player.energy < 50) this.player.attributes.Físico -= 0.1; // Risco de lesão/queda
+
+                // 3. Sistema de Transferência
+                if(this.isTransferWindow) this.generateOffers();
+                else this.offers = [];
+
+                // 4. Virada de Ano/Temporada
+                this.week++;
+                if(this.week > 52) {
+                    this.endSeason();
+                }
+
+                this.isProcessing = false;
+            },
+
+            simulateMatch() {
+                // Matemática da Simulação
+                const tier = this.db.leagues[this.player.league].tier;
+                const difficulty = tier * 0.8; // Tier 1 é mais difícil
+                const skillFactor = this.player.ovr / 100;
+                const formFactor = this.player.moral / 100;
+                const rng = Math.random();
+
+                // Performance Score (0.0 a 10.0)
+                let rawPerformance = (skillFactor * 5) + (formFactor * 2) + (rng * 3);
+                
+                // Penalidade por jogar em liga difícil sendo fraco
+                if (tier === 1 && this.player.ovr < 75) rawPerformance -= 1.5;
+                // Bônus por jogar em liga fácil sendo forte (Smurfing)
+                if (tier === 3 && this.player.ovr > 80) rawPerformance += 2.0;
+
+                const rating = Math.min(10, Math.max(3, rawPerformance)).toFixed(1);
+
+                // Gerar Stats baseados na posição
+                let goals = 0, assists = 0, xg = 0;
+
+                if (this.player.position === 'ATA') {
+                    xg = (rawPerformance * 0.15).toFixed(2);
+                    if (rng > 0.6 && rawPerformance > 7) goals = 1;
+                    if (rng > 0.9 && rawPerformance > 8.5) goals = 2; // Brace
+                    if (rng > 0.98 && rawPerformance > 9.5) goals = 3; // Hat-trick
+                } else if (this.player.position === 'MEI') {
+                    if (rng > 0.7 && rawPerformance > 7) assists = 1;
+                    if (rng > 0.9 && rawPerformance > 8) goals = 1;
+                } else {
+                    // Zagueiro
+                    if (rawPerformance > 7.5) this.player.value += 10000; // Clean sheet bonus implícito
+                }
+
+                // Atualizar Season Stats
+                this.stats.season.matches++;
+                this.stats.season.goals += goals;
+                this.stats.season.assists += assists;
+                this.stats.season.xg = (parseFloat(this.stats.season.xg) + parseFloat(xg)).toFixed(2);
+                this.stats.season.sumRating += parseFloat(rating);
+                this.stats.season.avgRating = (this.stats.season.sumRating / this.stats.season.matches).toFixed(1);
+
+                // Narrativa
+                if (goals > 0) {
+                    this.addFeed("Globo Esporte", "GOL!", NARRATIVES.good[2].replace("{name}", this.player.name));
+                    this.player.moral = Math.min(100, this.player.moral + 5);
+                } else if (parseFloat(rating) < 5.0) {
+                    this.addFeed("Twitter", "Crítica", NARRATIVES.bad[0].replace("{name}", this.player.name));
+                    this.player.moral = Math.max(0, this.player.moral - 5);
+                }
+
+                this.calculateValue(); // Atualiza valor após jogo
+            },
+
+            endSeason() {
+                this.week = 1;
+                this.currentYear++;
+                this.player.age++;
+
+                // Evolução
+                let growth = 0;
+                if (this.player.age < 24) growth = Math.floor(Math.random() * 4) + 1; // Evolui rápido
+                else if (this.player.age > 30) growth = -2; // Declínio
+
+                // Aplica crescimento
+                for (let key in this.player.attributes) {
+                    this.player.attributes[key] = Math.min(99, this.player.attributes[key] + growth);
+                }
+                this.calculateOvr();
+
+                // Arquiva Histórico
+                const seasonRecord = {
+                    year: this.currentYear - 1,
+                    club: this.player.club.name,
+                    matches: this.stats.season.matches,
+                    goals: this.stats.season.goals,
+                    assists: this.stats.season.assists,
+                    rating: this.stats.season.avgRating,
+                    trophies: []
+                };
+
+                // Bola de Ouro Check
+                if (this.stats.season.goals > 25 && this.stats.season.avgRating > 8.0 && this.db.leagues[this.player.league].tier <= 2) {
+                    this.showBallonDor = true;
+                    this.player.reputation++;
+                    seasonRecord.trophies.push("Bola de Ouro");
+                    this.trophies.push({name: "Bola de Ouro", year: this.currentYear - 1});
+                }
+
+                this.history.unshift(seasonRecord);
+                
+                // Reset Season
+                this.stats.season = { matches: 0, goals: 0, assists: 0, xg: 0, avgRating: "0.0", sumRating: 0 };
+                this.addFeed("Sistema", "Nova Temporada", `Começa a temporada ${this.currentYear}. Objetivos renovados.`);
+            },
+
+            // --- ECONOMIA & MERCADO --- //
+            calculateOvr() {
+                const attrs = Object.values(this.player.attributes);
+                this.player.ovr = Math.floor(attrs.reduce((a, b) => a + b, 0) / attrs.length);
+            },
+            calculateValue() {
+                // Algoritmo de Valuation
+                let baseValue = 1000000; // 1M base
+                const ovrMult = Math.pow(this.player.ovr, 3) / 10000; // Curva exponencial
+                const ageFactor = this.player.age < 23 ? 1.5 : (this.player.age > 30 ? 0.6 : 1.0);
+                const leagueMult = this.db.leagues[this.player.league].multiplier;
+                
+                this.player.value = Math.floor(baseValue + (ovrMult * 500 * ageFactor * leagueMult));
+                this.player.wage = Math.floor(this.player.value * 0.05); // Salário aprox 5% do valor
+            },
+            generateOffers() {
+                if (Math.random() > 0.2) return; // 20% de chance de oferta por semana na janela
+
+                const potentialLeagues = Object.keys(this.db.leagues);
+                const randomLeagueName = potentialLeagues[Math.floor(Math.random() * potentialLeagues.length)];
+                const clubs = this.db.leagues[randomLeagueName].clubs;
+                
+                // Filtra clubes realistas (OVR do jogador compatível com budget/tier)
+                const suitableClubs = clubs.filter(c => {
+                    // Se jogador é muito bom (85+), só times ricos
+                    if (this.player.ovr > 85) return c.budget > 150;
+                    return true;
+                });
+
+                if(suitableClubs.length > 0) {
+                    const club = suitableClubs[Math.floor(Math.random() * suitableClubs.length)];
+                    if(club.name !== this.player.club.name) {
+                        this.offers.push({
+                            id: Date.now(),
+                            clubName: club.name,
+                            league: randomLeagueName,
+                            wage: Math.floor(this.player.wage * 1.3), // Oferta 30% maior
+                            fee: Math.floor(this.player.value * 1.2),
+                            years: Math.floor(Math.random() * 4) + 1,
+                            status: this.player.ovr > 80 ? "Estrela" : "Titular"
+                        });
+                        this.addFeed("Rumor de Mercado", "Proposta", `${club.name} enviou uma proposta oficial por você.`);
+                        this.activeTab = 'transfers';
+                    }
+                }
+            },
+            acceptOffer(offer) {
+                this.player.club = { name: offer.clubName, budget: 0 };
+                this.player.league = offer.league;
+                this.player.wage = offer.wage;
+                this.player.moral = 100;
+                this.offers = [];
+                this.addFeed("Oficial", "Casa Nova", `Assinado! ${this.player.name} é o novo reforço do ${offer.clubName}.`);
+            },
+            rejectOffer(id) {
+                this.offers = this.offers.filter(o => o.id !== id);
+            },
+
+            // --- UTILS --- //
+            addFeed(source, headline, content) {
+                this.feed.unshift({
+                    source, headline, content,
+                    date: this.currentDateDisplay,
+                    likes: Math.floor(Math.random() * 5000),
+                    shares: Math.floor(Math.random() * 1000)
+                });
+                if(this.feed.length > 20) this.feed.pop();
+            },
+            closeBallonDor() {
+                this.showBallonDor = false;
+                this.player.value *= 1.5; // Valor explode
+            },
+            formatMoney(val) {
+                if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                return (val / 1000).toFixed(0) + 'K';
+            },
+            formatNumber(num) {
+                return new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(num);
+            },
+            getRatingColor(r) {
+                if(r >= 8.0) return 'text-green-500 font-bold';
+                if(r >= 6.0) return 'text-yellow-500';
+                return 'text-red-500';
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
