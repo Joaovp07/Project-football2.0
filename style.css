@@ -1,0 +1,67 @@
+:root {
+    --bg: #0a0a0c;
+    --card: #15151a;
+    --primary: #e63946;
+    --text: #e1e1e6;
+    --green: #4ade80;
+}
+
+[v-cloak] { display: none; }
+
+body { 
+    margin: 0; background: var(--bg); color: var(--text); 
+    font-family: 'Segoe UI', Roboto, sans-serif; 
+}
+
+/* Layout */
+.main-layout { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+
+.sidebar { background: var(--card); padding: 20px; border-right: 1px solid #222; }
+.content { padding: 30px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+/* Components */
+.ovr-circle {
+    width: 80px; height: 80px; border: 4px solid var(--primary);
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 2rem; font-weight: 900; margin: 0 auto 10px;
+}
+
+.player-profile { text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; }
+
+.stat-item { margin-bottom: 12px; }
+.stat-info { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; font-weight: bold; }
+
+.bar-bg { background: #222; height: 6px; border-radius: 3px; }
+.bar-fill { background: var(--primary); height: 100%; border-radius: 3px; transition: 0.5s; }
+.bar-fill.energy { background: #3b82f6; }
+
+.top-bar { 
+    background: var(--card); padding: 20px; border-radius: 12px; 
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.btn-action {
+    background: var(--primary); border: none; color: white;
+    padding: 12px 30px; border-radius: 6px; font-weight: 900; cursor: pointer;
+}
+
+.news-card {
+    background: #1a1a20; padding: 15px; border-radius: 8px;
+    border-left: 4px solid #444; margin-bottom: 10px;
+}
+.news-card.goal { border-left-color: var(--green); }
+.news-card.injury { border-left-color: #f59e0b; }
+
+.text-green { color: var(--green); }
+
+/* Setup & Modais */
+.setup-container { height: 100vh; display: flex; align-items: center; justify-content: center; }
+.setup-card { background: var(--card); padding: 40px; border-radius: 15px; text-align: center; }
+.setup-card h1 span { color: var(--primary); }
+input { background: #000; border: 1px solid #333; color: white; padding: 10px; width: 100%; margin: 15px 0; }
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+}
+.modal { background: var(--card); padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; }
