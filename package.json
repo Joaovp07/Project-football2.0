@@ -1,0 +1,14 @@
+{
+  "name": "projeto-futebol",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Projeto web estático servido com Node.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+  ,
+  "dependencies": {
+    "better-sqlite3": "^8.1.0"
+  }
+}
